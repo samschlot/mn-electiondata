@@ -1,15 +1,18 @@
 """Build the app's data files.
 
 Sources
-  - 2022 and 2024: precinct-level tabs in the original Excel workbook
-  - 2026: MN Secretary of State results files (electionresultsfiles.sos.mn.gov/20261103/)
+  - Election results, all years: MN Secretary of State precinct files, saved as
+    <sos-dir>/<year>/allracesbyprecinct.txt, from electionresultsfiles.sos.mn.gov/<election date>/
+    (20221108, 20241105, 20261103), plus pctstats.txt (registration and ballots) in the same folders
+  - IE spending and location notes: the original Excel workbook
   - Maps: LCC current legislative districts (gis.lcc.mn.gov/data/geojson/L2023_0hse.zip, L2023_0sen.zip)
 
 Usage
-  python build_data.py --workbook MNElectionsDatabase.xlsx --sos-dir raw/ --geo-dir geo/
+  python build_data.py --workbook MNElectionsDatabase.xlsx --sos-dir raw/ [--geo-dir geo/]
 
+--geo-dir is only needed to regenerate the map files, which change only with redistricting.
 Re-run after the State Canvassing Board certifies results to swap unofficial 2026 numbers
-for official ones (re-download allracesbyprecinct.txt first).
+for official ones (re-download raw/2026/allracesbyprecinct.txt first).
 """
 import argparse
 import json
@@ -49,24 +52,11 @@ def split_office(raw):
     return OFFICES.get(m.group(1)), m.group(2)
 
 
-def workbook_results(wb):
-    """Precinct rows from the workbook's raw-data tabs, aggregated to House district."""
-    specs = {  # tab: (year, office col, HD col, name col, party col, votes col)
-        "2022 Raw Data": (2022, 7, 4, 8, 9, 10),
-        "2024 Raw Data": (2024, 3, 4, 6, 7, 8),
-    }
-    rows = []
-    for tab, (year, oc, hc, nc, pc, vc) in specs.items():
-        for r in wb[tab].iter_rows(min_row=2, values_only=True):
-            office, odist = split_office(r[oc]) if r[oc] else (None, None)
-            hd = norm_hd(r[hc])
-            if office and hd:
-                rows.append((year, hd, office, odist, r[nc], r[pc], r[vc] or 0))
-    return rows
+YEARS = [2022, 2024, 2026]
 
 
-def sos_results(path):
-    """2026 SOS precinct file -> rows aggregated to House district.
+def sos_results(path, year):
+    """SOS precinct file -> (rows for every candidate, precinct -> House district map).
 
     Statewide/federal rows don't carry a legislative district, so each precinct is mapped
     to its House district using that precinct's State Representative rows.
@@ -83,7 +73,27 @@ def sos_results(path):
     df["office_n"] = split.str[0]
     df["odist"] = split.str[1]
     df = df[df["office_n"].notna() & df["hd"].notna()]
-    return [(2026, r.hd, r.office_n, r.odist, r.name, r.party, r.votes) for r in df.itertuples()]
+    rows = [(year, r.hd, r.office_n, r.odist, r.name, r.party, r.votes) for r in df.itertuples()]
+    return rows, pct_to_hd
+
+
+def sos_turnout(path, year, pct_to_hd):
+    """SOS pctstats.txt -> registered voters and ballots cast by House district.
+
+    Registered = registered at 7am + election-day registrations; turnout = ballots / registered.
+    """
+    cols = ["state", "county", "precinct", "name", "reporting", "reg_7am", "edr",
+            "c7", "c8", "c9", "c10", "ballots"]
+    df = pd.read_csv(path, sep=";", header=None, names=cols, dtype={"county": str, "precinct": str},
+                     encoding="latin-1")
+    df["hd"] = (df["county"] + "-" + df["precinct"]).map(pct_to_hd)
+    if df["hd"].isna().any():
+        raise ValueError(f"{year}: {df['hd'].isna().sum()} precincts in pctstats.txt have no House district")
+    df["registered"] = df["reg_7am"] + df["edr"]
+    out = df.groupby("hd", as_index=False)[["registered", "ballots"]].sum()
+    out["year"] = year
+    out["sd"] = out["hd"].str[:-1].astype(int)
+    return out
 
 
 def tidy_results(rows):
@@ -94,22 +104,6 @@ def tidy_results(rows):
     df["sd"] = df["hd"].str[:-1].astype(int)
     return (df.groupby(["year", "hd", "sd", "office", "office_district", "candidate", "party"], as_index=False)
               ["votes"].sum())
-
-
-def turnout(wb):
-    h = pd.DataFrame(list(wb["House Turnout"].iter_rows(min_row=2, max_col=15, values_only=True)))
-    h = h[[0, 1, 2, 3, 4, 5, 6, 7, 12, 13, 14]]
-    h.columns = ["district", "t2024", "t2022", "t2020", "t2018", "t2016", "t2014", "t2012",
-                 "voters", "projected_ballots", "win_number"]
-    h["district"] = h["district"].map(norm_hd)
-    h["chamber"] = "House"
-    s = pd.DataFrame(list(wb["Senate Turnout"].iter_rows(min_row=2, max_col=20, values_only=True)))
-    s = s[[0, 1, 2, 3, 4, 5, 6, 7, 17, 18, 19]]
-    s.columns = h.columns[:-1].tolist()
-    s["district"] = pd.to_numeric(s["district"], errors="coerce").astype("Int64").astype(str)
-    s["chamber"] = "Senate"
-    out = pd.concat([h, s]).dropna(subset=["district"])
-    return out[out["district"].ne("<NA>")]
 
 
 def ie(wb):
@@ -157,20 +151,25 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--workbook", required=True)
     ap.add_argument("--sos-dir", required=True)
-    ap.add_argument("--geo-dir", required=True)
+    ap.add_argument("--geo-dir")
     a = ap.parse_args()
     OUT.mkdir(exist_ok=True)
 
     wb = openpyxl.load_workbook(a.workbook, data_only=True, read_only=True)
-    rows = workbook_results(wb) + sos_results(Path(a.sos_dir) / "allracesbyprecinct.txt")
+    rows, sos_t = [], []
+    for y in YEARS:
+        r, pct_to_hd = sos_results(Path(a.sos_dir) / str(y) / "allracesbyprecinct.txt", y)
+        rows += r
+        sos_t.append(sos_turnout(Path(a.sos_dir) / str(y) / "pctstats.txt", y, pct_to_hd))
     tidy_results(rows).to_csv(OUT / "results.csv", index=False)
-    turnout(wb).to_csv(OUT / "turnout.csv", index=False)
+    pd.concat(sos_t).to_csv(OUT / "turnout_sos.csv", index=False)
     ie(wb).to_csv(OUT / "ie.csv", index=False)
     locations(wb).to_csv(OUT / "locations.csv", index=False)
 
-    geo = Path(a.geo_dir)
-    simplify_geo(geo / "L2023_0hse.geojson", OUT / "house.geojson", True)
-    simplify_geo(geo / "L2023_0sen.geojson", OUT / "senate.geojson", False)
+    if a.geo_dir:
+        geo = Path(a.geo_dir)
+        simplify_geo(geo / "L2023_0hse.geojson", OUT / "house.geojson", True)
+        simplify_geo(geo / "L2023_0sen.geojson", OUT / "senate.geojson", False)
     print("Wrote", *sorted(p.name for p in OUT.iterdir()))
 
 
