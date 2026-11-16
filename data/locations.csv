@@ -1,0 +1,202 @@
+chamber,district,location
+House,1A,Northwest MN
+Senate,1,Northwest MN
+House,1B,Northwest MN
+Senate,2,Bemidji and Lake of the Woods Area
+House,2A,Bemidji & Lake of the Woods Area
+Senate,3,"Arrowhead, Boundary Waters, and Greater Duluth Area"
+House,2B,Northwest MN
+Senate,4,"Moorhead, Clay County, and Detroit Lakes"
+House,3A,Arrowhead & Boundary Waters Area
+Senate,5,North Central MN
+House,3B,Hermantown & Greater Duluth Area
+Senate,6,Grand Rapids and Brainerd
+House,4A,Moorhead
+Senate,7,Iron Range
+House,4B,Clay County & Detroit Lakes Area
+Senate,8,Duluth
+House,5A,North Central MN
+Senate,9,Western MN
+House,5B,North Central MN
+Senate,10,"Mille Lacs area, stretching south to St. Cloud"
+House,6A,Grand Rapids
+Senate,11,Cloquet and Pine County Area
+House,6B,Brainerd Area
+Senate,12,Western MN
+House,7A,Iron Range
+Senate,13,Central MN
+House,7B,Iron Range
+Senate,14,St. Cloud
+House,8A,Duluth
+Senate,15,Southwest MN
+House,8B,Duluth
+Senate,16,West Central MN
+House,9A,Western MN
+Senate,17,Central MN
+House,9B,Western MN
+Senate,18,St. Peter and Mankato Area
+House,10A,Mille Lacs Area
+Senate,19,Southern MN
+House,10B,"South of Mille Lacs, North of St. Cloud"
+Senate,20,"Goodhue, Wabasha, and Olmsted County"
+House,11A,Cloquet Area
+Senate,21,Southwest MN
+House,11B,Pine County
+Senate,22,South Central MN
+House,12A,Western MN
+Senate,23,Albert Lea and Austin Area
+House,12B,Western MN
+Senate,24,Dodge County & Southern Rochester
+House,13A,Central MN
+Senate,25,Rochester
+House,13B,Central MN
+Senate,26,Winona and Southeast MN
+House,14A,St. Cloud Area
+Senate,27,Sherburne County
+House,14B,St. Cloud Area
+Senate,28,Isanti and Chisago Area
+House,15A,Southwest MN
+Senate,29,Wright County
+House,15B,Southwest MN
+Senate,30,"St. Michael, Albertville, and Elk River"
+House,16A,West Central MN
+Senate,31,"Andover, Ramsey, and Northern Anoka County"
+House,16B,West Central MN
+Senate,32,"Blaine, Ham Lake, and Columbus"
+House,17A,Central MN
+Senate,33,"Forest Lake, Mahtomedi, and Stillwater Area"
+House,17B,Central MN
+Senate,34,Northwest Hennepin County
+House,18A,St. Peter & Nicollet County
+Senate,35,Anoka and Coon Rapids
+House,18B,Mankato
+Senate,36,White Bear Lake and Lino Lakes
+House,19A,Southern MN
+Senate,37,Maple Grove and Western Hennepin County
+House,19B,Waseca and Owatonna
+Senate,38,Brooklyn Park and Brooklyn Center
+House,20A,Goodhue and Wabasha Counties
+Senate,39,Southern Anoka County
+House,20B,Wabasha and Olmsted Counties
+Senate,40,"Arden Hills, New Brighton, Roseville, and Shoreview"
+House,21A,Southwest MN
+Senate,41,East Metro
+House,21B,Southwest MN
+Senate,42,Plymouth
+House,22A,South Central MN
+Senate,43,Western Minneapolis Suburbs
+House,22B,Le Sueur County
+Senate,44,North St. Paul Suburbs
+House,23A,"Southern MN, Albert Lea"
+Senate,45,Greater Lake Minnetonka Area
+House,23B,"Southern MN, Austin"
+Senate,46,St. Louis Park and Hopkins
+House,24A,Dodge County
+Senate,47,Woodbury
+House,24B,Southern Rochester
+Senate,48,Eastern Carver County
+House,25A,Rochester
+Senate,49,Minnetonka and Eden Prairie
+House,25B,Northern Rochester
+Senate,50,Edina and Bloomington
+House,26A,Winona Area
+Senate,51,Richfield and Bloomington
+House,26B,Southeastern MN
+Senate,52,"Eagan, Burnsville, and Mendota Heights"
+House,27A,Sherburne County
+Senate,53,Southern Saint Paul Suburbs
+House,27B,Sherburne County
+Senate,54,Northern Scott County
+House,28A,Isanti Area
+Senate,55,Savage and Burnsville
+House,28B,Chisago Area
+Senate,56,Apple Valley and Rosemount
+House,29A,Wright County
+Senate,57,Lakeville
+House,29B,Wright County
+Senate,58,"Northfield, Southern Dakota County, and Northern Scott County"
+House,30A,St. Michael & Albertville
+Senate,59,North Minneapolis & Downtown Minneapolis
+House,30B,Elk River
+Senate,60,Northeast Minneapolis
+House,31A,Andover and Ramsey
+Senate,61,Downtown and Uptown Minneapolis
+House,31B,Northern Anoka County
+Senate,62,Phillips and Powderhorn Park Minneapolis
+House,32A,"Blaine, Ham Lake, and Columbus"
+Senate,63,"Seward, Longfellow, and South Minneapolis"
+House,32B,Blaine
+Senate,64,Summit Hill and Highland Park St. Paul
+House,33A,"Forest Lake, Hugo, and Mahtomedi Area"
+Senate,65,Downtown and West Side St. Paul
+House,33B,Stillwater Area
+Senate,66,Hamline-Midway and North End St. Paul
+House,34A,"Rogers, Dayton, and Champlin"
+Senate,67,Eastern St. Paul
+House,34B,Brooklyn Park
+House,35A,Anoka and Coon Rapids
+House,35B,Coon Rapids
+House,36A,Lino Lakes and North Oaks Area
+House,36B,White Bear Lake Area
+House,37A,Western Hennepin County
+House,37B,Maple Grove
+House,38A,Brooklyn Park
+House,38B,Brooklyn Center
+House,39A,Southern Anoka County
+House,39B,Columbia Heights Area
+House,40A,"Arden Hills, New Brighton, and Shoreview"
+House,40B,Roseville and Shoreview
+House,41A,Lake Elmo and Afton Area
+House,41B,Cottage Grove and Hastings Area
+House,42A,Plymouth
+House,42B,Plymouth
+House,43A,New Hope and Crystal
+House,43B,Golden Valley and Robbinsdale
+House,44A,Little Canada and Maplewood
+House,44B,Oakdale and North St. Paul
+House,45A,Western Lake Minnetonka Area
+House,45B,Minnetonka
+House,46A,St. Louis Park
+House,46B,Hopkins
+House,47A,Woodbury
+House,47B,Woodbury
+House,48A,Victoria and Waconia Area
+House,48B,Chanhassen and Chaska
+House,49A,Minnetonka and Eden Prairie
+House,49B,Eden Prairie
+House,50A,Edina
+House,50B,Bloomington
+House,51A,Richfield
+House,51B,Bloomington
+House,52A,Eagan and Burnsville
+House,52B,Eagan and Mendota Heights
+House,53A,"Inver Grove Heights, South of St. Paul Area"
+House,53B,"South St. Paul, St. Paul Park"
+House,54A,Shakopee
+House,54B,Prioer Lake and Scott County
+House,55A,Savage
+House,55B,Burnsville
+House,56A,Apple Valley
+House,56B,Rousemount
+House,57A,Lakeville South
+House,57B,Lakeville North
+House,58A,Northfield and Scott County
+House,58B,Southern Dakota County
+House,59A,North Minneapolis
+House,59B,Downtown Minneapolis
+House,60A,Northeast Minneapolis
+House,60B,Eastern Minneapolis
+House,61A,Lake of the Isles & Downtown Minneapolis
+House,61B,Uptown Minneapolis
+House,62A,Phillips Minneapolis
+House,62B,Powderhorn Park Minneapolis
+House,63A,Seward and Longfellow Minneapolis
+House,63B,South Minneapolis
+House,64A,Summit Hill St. Paul
+House,64B,Highland Park St. Paul
+House,65A,Frogtown and Downtown St. Paul
+House,65B,West Side St. Paul
+House,66A,Hamline-Midway
+House,66B,North End St. Paul
+House,67A,Payne-Phalen St. Paul
+House,67B,Dayton's Bluff and Battle Creek St. Paul
