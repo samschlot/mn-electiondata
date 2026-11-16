@@ -33,8 +33,13 @@ def dist_sort_key(d):
     return (int(m.group(1)), m.group(2))
 
 
+def data_version():
+    """Changes whenever a data file changes, so cached data refreshes after new files are uploaded."""
+    return tuple((f.name, f.stat().st_size, f.stat().st_mtime_ns) for f in sorted(DATA.iterdir()))
+
+
 @st.cache_data
-def load():
+def load(version):
     res = pd.read_csv(DATA / "results.csv", dtype={"hd": str, "office_district": str})
     res["office_district"] = res["office_district"].fillna("")
     res["sd"] = res["sd"].astype(str)
@@ -73,9 +78,9 @@ def leg_winners(res, chamber):
 
 
 @st.cache_data
-def district_table(chamber, sans_klobuchar):
+def district_table(chamber, sans_klobuchar, version):
     """One row per district: DFL Performance by year, the 2024 -> 2026 shift, and legislative winners."""
-    res = load()[0]
+    res = load(version)[0]
     key = key_col(chamber)
     p = dfl_perf(res, key).unstack(0)
     p.columns = [f"perf_{y}" for y in p.columns]
@@ -157,7 +162,8 @@ def party_label(p):
 
 # ---------- views ----------
 
-res, turnout, loc, geo = load()
+DATA_VERSION = data_version()
+res, turnout, loc, geo = load(DATA_VERSION)
 SURFACE_NOTE = ("2026 results are **unofficial** (MN Secretary of State, all precincts reporting) until the "
                 "State Canvassing Board certifies them. Re-run `build_data.py` afterward to refresh.")
 
@@ -170,7 +176,7 @@ with st.sidebar:
     sans_klobuchar = st.toggle("Exclude Klobuchar from 2024", key="sans_klobuchar",
                                help="Drops the 2024 U.S. Senate race (Klobuchar) from every 2024 DFL Performance "
                                     "number and the 2024 → 2026 shift.")
-    table = district_table(chamber, sans_klobuchar)
+    table = district_table(chamber, sans_klobuchar, DATA_VERSION)
     districts = table["district"].tolist()
     dkey = f"district_{chamber}"
     if dkey not in st.session_state:
