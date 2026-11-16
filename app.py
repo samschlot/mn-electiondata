@@ -21,9 +21,7 @@ OFFICE_ORDER = ["President", "Governor", "U.S. Senate", "Attorney General", "Sec
                 "State Auditor", "U.S. House", "State Senate", "State House"]
 # Klobuchar was on the 2024 ballot for U.S. Senate; the sidebar toggle drops that race from 2024 metrics
 KLOBUCHAR_2024_RACE = "U.S. Senate"
-MAP_OPTIONS = ["2026 DFL Performance", "2024 → 2026 shift", "2026 legislative winner",
-               "Modeled Shifts", "Modeled Baseline"]
-MODELED_MAPS = {"Modeled Shifts", "Modeled Baseline"}
+MAP_OPTIONS = ["2026 DFL Performance", "2024 → 2026 shift", "2026 legislative winner"]
 
 st.set_page_config(page_title="MN Election Results & Shifts", page_icon="🗳️", layout="wide")
 
@@ -63,9 +61,11 @@ def leg_winners(res, chamber):
     d = res[res["office"] == office]
     rows = []
     for (year, dist), g in d.groupby(["year", key]):
+        # Senate rows are split by House district (A/B), so total each candidate before picking the winner
+        by_cand = g.groupby(["candidate", "party"], as_index=False)["votes"].sum()
         by_party = g.groupby("party")["votes"].sum()
         total = g["votes"].sum()
-        top = g.sort_values("votes", ascending=False).iloc[0]
+        top = by_cand.sort_values("votes", ascending=False).iloc[0]
         dfl, gop = by_party.get("DFL", 0), by_party.get("R", 0)
         rows.append({"year": year, "district": dist, "winner": top["candidate"], "winner_party": top["party"],
                      "dfl_pct": dfl / total, "r_pct": gop / total, "contested": dfl > 0 and gop > 0})
@@ -93,13 +93,6 @@ def district_table(chamber, sans_klobuchar):
     p = p.reset_index()
     return p.iloc[sorted(range(len(p)), key=lambda i: dist_sort_key(p["district"].iat[i]))].reset_index(drop=True)
 
-
-def modeled_values(kind, chamber):
-    """Placeholder for the Modeled Shifts / Modeled Baseline maps.
-
-    Return a Series of values indexed by district once the model data is added; None means not available yet.
-    """
-    return None
 
 
 def race_table(res, chamber, district, year):
@@ -149,6 +142,15 @@ def pct(v, signed=False, digits=1):
     return f"{v * 100:+.{digits}f}" if signed else f"{v * 100:.{digits}f}%"
 
 
+def shift_text(v):
+    """0.012 -> 'Shifted 1.2 points more blue from 2024'."""
+    if v is None or pd.isna(v):
+        return "No 2024 comparison"
+    if round(abs(v) * 100, 1) == 0:
+        return "No change from 2024"
+    return f"Shifted {abs(v) * 100:.1f} points more {'blue' if v > 0 else 'red'} from 2024"
+
+
 def party_label(p):
     return {"DFL": "DFL", "R": "Republican"}.get(p, p or "—")
 
@@ -191,30 +193,31 @@ with tab_district:
 
     with map_col:
         m = table.copy()
-        modeled = modeled_values(map_metric, chamber) if map_metric in MODELED_MAPS else None
         if map_metric == "2026 DFL Performance":
             m["value"] = m["perf_2026"]
             scale, rng = DIVERGING, (0.25, 0.75)
         elif map_metric == "2024 → 2026 shift":
             m["value"] = m["shift_24_26"]
             scale, rng = DIVERGING, (-0.12, 0.12)
-        elif map_metric == "2026 legislative winner":
+        else:
             m["value"] = m["party_2026"].map({"DFL": 1.0, "R": 0.0}).fillna(0.5)
             scale, rng = [[0, GOP_RED], [0.5, NEUTRAL], [1, DFL_BLUE]], (0, 1)
-        else:  # Modeled maps: neutral until their data is added
-            m["value"] = m["district"].map(modeled) if modeled is not None else 0.5
-            scale, rng = DIVERGING, (0.25, 0.75)
-        m["label"] = ("HD " if chamber == "House" else "SD ") + m["district"]
+        m["label"] = ("House District " if chamber == "House" else "Senate District ") + m["district"]
         m["winner"] = m["winner_2026"].fillna("—") + " (" + m["party_2026"].fillna("—") + ")"
         m["perf"] = m["perf_2026"].map(pct)
-        m["shift"] = m["shift_24_26"].map(lambda v: pct(v, signed=True) + " pts")
+        m["shift"] = m["shift_24_26"].map(shift_text)
         fig = px.choropleth(
             m, geojson=geo[chamber], locations="district", color="value",
-            color_continuous_scale=scale, range_color=rng,
-            hover_name="label", hover_data={"district": False, "value": False, "winner": True,
-                                            "perf": True, "shift": True},
-            labels={"winner": "2026 winner", "perf": "2026 DFL Perf.", "shift": "Shift vs 2024"},
+            color_continuous_scale=scale, range_color=rng, custom_data=["winner", "label", "perf", "shift"],
         )
+        fig.update_traces(hovertemplate=(
+            "<b>%{customdata[0]}</b><br>"
+            "<span style='color:#6b6b66;font-size:11px'>%{customdata[1]}</span><br><br>"
+            "2026 DFL Performance: %{customdata[2]}<br>"
+            "%{customdata[3]}<extra></extra>"
+        ))
+        fig.update_layout(hoverlabel=dict(bgcolor="white", bordercolor="#d6d5d0", align="left",
+                                          font=dict(size=13, color="#1f1f1c")))
         # Outline the selected district
         sel = m[m["district"] == district]
         fig.add_trace(go.Choropleth(geojson=geo[chamber], locations=sel["district"], z=[1],
@@ -225,8 +228,7 @@ with tab_district:
         fig.update_layout(height=560, margin=dict(l=0, r=0, t=0, b=0),
                           coloraxis_colorbar=dict(title="", thickness=10, len=0.6,
                                                   tickformat="+.0%" if "shift" in map_metric else ".0%"),
-                          coloraxis_showscale=map_metric not in ("2026 legislative winner",)
-                          and not (map_metric in MODELED_MAPS and modeled is None))
+                          coloraxis_showscale=map_metric != "2026 legislative winner")
         fig.update_traces(marker_line_width=0.4, marker_line_color="white", selector=0)
         fig.update_traces(unselected=dict(marker_opacity=1))  # don't dim the map after a click
         def open_clicked_district():
@@ -236,8 +238,6 @@ with tab_district:
             if clicked in districts:
                 st.session_state[dkey] = clicked
 
-        if map_metric in MODELED_MAPS and modeled is None:
-            st.info(f"**{map_metric}** is a placeholder; its data hasn't been added yet.")
         st.plotly_chart(fig, on_select=open_clicked_district, selection_mode="points", key=f"map_{chamber}",
                         config={"scrollZoom": True, "displayModeBar": False})
         st.caption("Scroll or pinch to zoom into the metro. Gray = near 50/50.")
